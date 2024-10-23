@@ -97,7 +97,6 @@ class FileService {
         "/file/delete-file?share_id=$shareId",
       );
 
-      debugPrint(response.statusCode.toString());
     } catch (e) {
       debugPrint("[ERROR_DELETE_FILE]: $e");
     }

@@ -63,7 +63,7 @@ class _UploadFileScreenState extends ConsumerState<UploadFileScreen> {
           // Handle cases where path is null (e.g., on web platform)
           selectedFile = null; // No path on web, hence no File conversion
         }
-        debugPrint("Selected File: ${selectedFile!.uri.path.split('/').last}");
+        // debugPrint("Selected File: ${selectedFile!.uri.path.split('/').last}");
 
         setState(() {}); // Trigger UI update
       } else {

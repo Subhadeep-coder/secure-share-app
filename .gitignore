@@ -31,6 +31,9 @@ migrate_working_dir/
 .pub/
 /build/
 .env
+/assets/certificate.cer
+/assets/certificate.crt
+/assets/certificate.pem
 
 # Symbolication related
 app.*.symbols

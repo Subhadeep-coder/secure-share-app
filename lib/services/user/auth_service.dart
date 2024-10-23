@@ -11,7 +11,11 @@ class AuthService {
     baseUrl: baseUrl,
     contentType: 'application/json',
   ));
-  final storage = const FlutterSecureStorage();
+  final storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
   Future<String?> register(
       String name, String email, String password, String cPassword) async {
     try {
@@ -25,12 +29,10 @@ class AuthService {
         }),
       );
       final data = jsonDecode(response.toString());
-      debugPrint("$data");
       final accessToken = data['access_token'];
       final refreshToken = data['refresh_token'];
       await storage.write(key: 'access_token', value: accessToken);
       await storage.write(key: 'refresh_token', value: refreshToken);
-      debugPrint("${await storage.readAll()}");
       return accessToken;
     } catch (e) {
       debugPrint('[REGISTER_ERROR]' + e.toString());

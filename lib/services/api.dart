@@ -1,24 +1,56 @@
+// import 'dart:io';
 import 'package:dio/dio.dart';
+// import 'package:dio/io.dart';
 import 'package:flutter/material.dart';
+// import 'package:flutter/services.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class Api {
-  Dio api = Dio();
+  late Dio api;
   String? accessToken;
-  final _storage = const FlutterSecureStorage();
+  final _storage = const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  );
   static String baseUrl = '${dotenv.env['BACKEND_URL']}';
 
   Api() {
+    api = Dio();
+    _configureDio();
+  }
+
+  Future<void> _configureDio() async {
+    api.options.baseUrl = baseUrl;
+
+    // Load the certificate
+    // ByteData bytes = await rootBundle.load('assets/certificate.crt');
+    // SecurityContext securityContext = SecurityContext(withTrustedRoots: false);
+    // securityContext.setTrustedCertificatesBytes(bytes.buffer.asUint8List());
+
+    // // Create an HttpClient with the security context
+    // HttpClient httpClient = HttpClient(context: securityContext);
+
+    // // Configure SSL pinning
+    // httpClient.badCertificateCallback =
+    //     (X509Certificate cert, String host, int port) {
+    //   // You can add additional checks here if needed
+    //   return false; // Reject any certificate that doesn't match your pinned certificate
+    // };
+
+    // // Set the httpClientAdapter with the configured HttpClient
+    // (api.httpClientAdapter as IOHttpClientAdapter).createHttpClient =
+    //     () => httpClient;
+
+    // Add interceptors
     api.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) async {
-          // Attach the base URL if it's missing
           if (!options.path.startsWith('http')) {
             options.path = baseUrl + options.path;
           }
 
-          // Read access token from storage if not already set
           accessToken ??= await _storage.read(key: 'access_token');
 
           if (accessToken != null) {
@@ -28,15 +60,11 @@ class Api {
           return handler.next(options);
         },
         onError: (DioException error, handler) async {
-          // Check if the error is 401 (Unauthorized)
           if (error.response?.statusCode == 401) {
-            // Check if the refresh token exists
             final refreshToken = await _storage.read(key: "refresh_token");
             if (refreshToken != null) {
-              // Attempt to refresh the access token
               final refreshed = await _refreshAccessToken(refreshToken);
               if (refreshed) {
-                // Retry the original request with the new access token
                 final clonedRequest = await _retry(error.requestOptions);
                 return handler.resolve(clonedRequest);
               }
@@ -48,14 +76,15 @@ class Api {
     );
   }
 
-  // Method to retry a failed request
+  // Existing methods (_retry, _refreshAccessToken) remain the same
+  // ...
+
   Future<Response<dynamic>> _retry(RequestOptions requestOptions) async {
     final options = Options(
       method: requestOptions.method,
       headers: requestOptions.headers,
     );
 
-    // Update the authorization header with the new access token
     options.headers?['Authorization'] = 'Bearer $accessToken';
 
     return api.request<dynamic>(
@@ -66,7 +95,6 @@ class Api {
     );
   }
 
-  // Method to refresh the access token
   Future<bool> _refreshAccessToken(String refreshToken) async {
     try {
       debugPrint("Here in refreshing token");
@@ -82,7 +110,6 @@ class Api {
         await _storage.write(key: 'refresh_token', value: refreshToken);
         return true;
       } else {
-        // Clear tokens if refresh fails
         await _storage.deleteAll();
         accessToken = null;
         return false;

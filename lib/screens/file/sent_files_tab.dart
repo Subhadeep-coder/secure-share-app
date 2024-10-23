@@ -74,7 +74,6 @@ class _SentFilesTabState extends ConsumerState<SentFilesTab> with RouteAware {
         itemCount: sentFiles.length,
         itemBuilder: (context, index) {
           final file = sentFiles[index];
-          debugPrint(file.toJson().toString());
           return Padding(
             padding:
                 const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),

@@ -10,7 +10,11 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen> {
   final _storage =
-      const FlutterSecureStorage(); // Secure storage to store tokens
+      const FlutterSecureStorage(
+    aOptions: AndroidOptions(
+      encryptedSharedPreferences: true,
+    ),
+  ); // Secure storage to store tokens
   @override
   void initState() {
     super.initState();

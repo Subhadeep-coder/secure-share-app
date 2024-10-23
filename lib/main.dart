@@ -7,6 +7,7 @@ import 'package:app/screens/splash/intro.dart';
 import 'package:app/screens/splash/splash_screen.dart';
 import 'package:app/screens/user/profile_screen.dart';
 import 'package:app/services/api.dart';
+import 'package:app/utils/root_det.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,7 +17,19 @@ final apiProvider = Provider((ref) => Api());
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await dotenv.load(fileName: ".env");
-  runApp(const ProviderScope(child: MyApp()));
+  // Check for root/jailbreak
+  bool isDeviceCompromised = await checkDeviceIntegrity();
+  debugPrint("$isDeviceCompromised");
+  if (isDeviceCompromised) {
+    runApp(const CompromisedDeviceApp());
+  } else {
+    runApp(
+      ProviderScope(
+        overrides: [apiProvider],
+        child: const MyApp(),
+      ),
+    );
+  }
 }
 
 class MyApp extends ConsumerWidget {
