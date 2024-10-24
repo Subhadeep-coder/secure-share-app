@@ -11,7 +11,7 @@ class FileService {
 
   FileService({required this.ref});
 
-  Future<void> sendFile(
+  Future<bool> sendFile(
     String receipentEmail,
     String password,
     String expirationDate,
@@ -30,11 +30,12 @@ class FileService {
         ),
       });
       final response = await api.api.post('/file/upload-file', data: formData);
-      print(response.data);
+
+      return response.data != null;
     } catch (e) {
       debugPrint('Error fetching profile data: $e');
+      return false;
     }
-    return;
   }
 
   Future<List<FileModel>?> getSentFiles() async {
@@ -68,6 +69,7 @@ class FileService {
   Future<List<int>?> getFileContent(String shareId, String password) async {
     final api = ref.read(apiProvider);
     try {
+      debugPrint("ID: $shareId Pass: $password");
       final response = await api.api.post(
         "/file/retrieve-file",
         data: {
@@ -96,10 +98,8 @@ class FileService {
       final response = await api.api.delete(
         "/file/delete-file?share_id=$shareId",
       );
-
     } catch (e) {
       debugPrint("[ERROR_DELETE_FILE]: $e");
     }
   }
-  
 }

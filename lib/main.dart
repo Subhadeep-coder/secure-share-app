@@ -19,7 +19,6 @@ void main() async {
   await dotenv.load(fileName: ".env");
   // Check for root/jailbreak
   bool isDeviceCompromised = await checkDeviceIntegrity();
-  debugPrint("$isDeviceCompromised");
   if (isDeviceCompromised) {
     runApp(const CompromisedDeviceApp());
   } else {
@@ -47,14 +46,14 @@ class MyApp extends ConsumerWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => SplashScreen(),
-        '/intro': (context) => IntroScreen(),
-        '/auth': (context) => AuthScreen(),
-        '/home': (context) => FileTabsScreen(),
-        '/signup': (context) => SignupScreen(),
-        '/login': (context) => LoginScreen(),
-        '/profile': (context) => ProfileScreen(),
-        '/upload-file': (context) => UploadFileScreen(),
+        '/': (context) => const SplashScreen(),
+        '/intro': (context) => const IntroScreen(),
+        '/auth': (context) => const AuthScreen(),
+        '/home': (context) => const FileTabsScreen(),
+        '/signup': (context) => const SignupScreen(),
+        '/login': (context) => const LoginScreen(),
+        '/profile': (context) => const ProfileScreen(),
+        '/upload-file': (context) => const UploadFileScreen(),
       },
     );
   }

@@ -7,6 +7,7 @@ class DefaultTextField extends StatelessWidget {
   final ValueChanged<String>? onChanged;
   final bool? obsecure;
   final TextEditingController? controller;
+  final FormFieldValidator<String?> validator;
 
   const DefaultTextField({
     super.key,
@@ -16,6 +17,7 @@ class DefaultTextField extends StatelessWidget {
     this.obsecure,
     this.onChanged,
     this.controller,
+    required this.validator,
   });
 
   @override
@@ -39,6 +41,7 @@ class DefaultTextField extends StatelessWidget {
           obscureText: obsecure ?? false,
           onSaved: onSaved,
           onChanged: onChanged,
+          validator: validator,
           decoration: InputDecoration(
             hintText: hintText,
             border: const OutlineInputBorder(

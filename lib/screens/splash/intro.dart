@@ -92,8 +92,10 @@ class _IntroScreenState extends State<IntroScreen> {
                               curve: Curves.easeInOut);
                         }
                       : () {
-                          Navigator.of(context).pushReplacementNamed(
-                              '/auth'); // Navigate to the Auth screen
+                          Navigator.of(context).pushNamedAndRemoveUntil(
+                              '/auth',
+                              (Route<dynamic> route) =>
+                                  false); // Navigate to the Auth screen
                         },
                   child: Text(
                     _currentIndex < 2 ? 'Next' : 'Get Started',

@@ -55,6 +55,8 @@ class AuthService {
       final refreshToken = data['refresh_token'];
       await storage.write(key: 'access_token', value: accessToken);
       await storage.write(key: 'refresh_token', value: refreshToken);
+      await storage.write(
+          key: 'new_user', value: jsonEncode({'new_user': false}));
       return accessToken;
     } catch (e) {
       debugPrint('[LOGIN_ERROR]' + e.toString());

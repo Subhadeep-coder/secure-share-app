@@ -37,20 +37,29 @@ class _DownloadFileModalState extends ConsumerState<DownloadFileModal> {
         if (response != null && response.isNotEmpty) {
           // Write the binary data to the file
           await file.writeAsBytes(response);
-
+          debugPrint("Here");
           // Notify the user that the download is complete
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("File downloaded")),
           );
           Navigator.pop(context); // Close the modal
         } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Error while downloading File")),
+          );
           // Handle case when response is null or empty
           throw Exception('Failed to download file: No data received.');
         }
       } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error while downloading File")),
+        );
         print("Download error: $e");
       }
     } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error while downloading File")),
+      );
       print("Storage permission denied");
     }
   }

@@ -26,6 +26,7 @@ class _UploadFileScreenState extends ConsumerState<UploadFileScreen> {
   File? selectedFile;
   PlatformFile? platformFile;
   final TextEditingController _emailController = TextEditingController();
+  bool isLoading = false;
 
   @override
   void dispose() {
@@ -108,12 +109,35 @@ class _UploadFileScreenState extends ConsumerState<UploadFileScreen> {
     }
   }
 
+  resetForm() {
+    _formKey.currentState?.reset();
+    _emailController.clear();
+    platformFile = null;
+    selectedFile = null;
+    expirationDate = null;
+  }
+
   uploadFile(String receiverEmail, String password, String expirationDate,
       File file) async {
+    setState(() {
+      isLoading = true;
+    });
     final FileService fileService = FileService(ref: ref);
-    await fileService.sendFile(receiverEmail, password, expirationDate, file);
-    _formKey.currentState?.reset();
-    Navigator.of(context).pushReplacementNamed('/home');
+    final bool res = await fileService.sendFile(
+        receiverEmail, password, expirationDate, file);
+    // debugPrint("Response: $res");
+    resetForm();
+    setState(() {
+      isLoading = false;
+    });
+    if (res) {
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to send file")),
+      );
+    }
   }
 
   // Debounce function to handle the user input for searching emails
@@ -155,201 +179,256 @@ class _UploadFileScreenState extends ConsumerState<UploadFileScreen> {
         title: const Text("Secure Share"),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Padding(
-                  padding: EdgeInsets.symmetric(
-                      vertical: MediaQuery.of(context).size.width * 0.05),
-                  child: const Text(
-                    "Share a file",
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-                Form(
-                  key: _formKey,
-                  child: Column(
-                    children: <Widget>[
-                      SizedBox(height: MediaQuery.of(context).size.width * 0.1),
-                      DefaultTextField(
-                        label: 'Receiver Email',
-                        hintText: "Enter receiver email",
-                        controller: _emailController,
-                        onSaved: (newValue) {
-                          setState(() {
-                            receiverEmail =
-                                newValue; // Update the receiverEmail variable
-                          });
-                        },
-                        onChanged: (newValue) {
-                          _debounceSearch(newValue); // Call debounce function
-                        },
-                      ),
-                      if (_fetchedEmails
-                          .isNotEmpty) // Show dropdown if emails are fetched
-                        Container(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey),
-                            borderRadius: BorderRadius.circular(15.0),
-                          ),
-                          child: SizedBox(
-                            height: 100.0,
-                            child: ListView.separated(
-                              shrinkWrap: true,
-                              physics: const AlwaysScrollableScrollPhysics(),
-                              separatorBuilder: (context, index) =>
-                                  const Padding(
-                                padding: EdgeInsets.symmetric(
-                                    horizontal:
-                                        15.0), // Horizontal padding for the divider
-                                child: Divider(),
-                              ),
-                              itemCount: _fetchedEmails.length,
-                              itemBuilder: (context, index) {
-                                return Container(
-                                  height: 40.0,
-                                  alignment: Alignment.center,
-                                  child: ListTile(
-                                    title: Text(_fetchedEmails[index]),
-                                    onTap: () {
-                                      setState(() {
-                                        receiverEmail = _fetchedEmails[
-                                            index]; // Set the selected email
-                                        _emailController.text =
-                                            _fetchedEmails[index];
-                                        _fetchedEmails =
-                                            []; // Clear the list after selection
-                                      });
-                                    },
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.symmetric(
+                          vertical: MediaQuery.of(context).size.width * 0.05),
+                      child: const Text(
+                        "Share a file",
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.bold,
                         ),
-                      const SizedBox(height: 20),
-                      DefaultTextField(
-                        label: 'Password',
-                        hintText: "Enter password for file",
-                        obsecure: true,
-                        onSaved: (newValue) {
-                          setState(() {
-                            password = newValue;
-                          });
-                        },
                       ),
-                      const SizedBox(height: 20),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              "Select an expiration date",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                    ),
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: <Widget>[
+                          SizedBox(
+                              height: MediaQuery.of(context).size.width * 0.1),
+                          DefaultTextField(
+                            label: 'Receiver Email',
+                            hintText: "Enter receiver email",
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your email';
+                              } else if (!RegExp(
+                                      r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$')
+                                  .hasMatch(value)) {
+                                return 'Please enter a valid email address';
+                              }
+                              return null;
+                            },
+                            controller: _emailController,
+                            onSaved: (newValue) {
+                              setState(() {
+                                receiverEmail =
+                                    newValue; // Update the receiverEmail variable
+                              });
+                            },
+                            onChanged: (newValue) {
+                              _debounceSearch(
+                                  newValue); // Call debounce function
+                            },
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            children: [
-                              Text(
-                                expirationDate == null
-                                    ? "Select a date"
-                                    : "Date: ${getFormattedDateForDisplay(expirationDate)}",
+                          if (_fetchedEmails
+                              .isNotEmpty) // Show dropdown if emails are fetched
+                            Container(
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 8.0),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey),
+                                borderRadius: BorderRadius.circular(15.0),
                               ),
-                              const SizedBox(height: 20),
-                              ElevatedButton(
-                                onPressed: () => _pickDate(context),
-                                child: Text(
-                                  expirationDate == null
-                                      ? "Select Expiration Date"
-                                      : "Edit",
+                              child: SizedBox(
+                                height: 100.0,
+                                child: ListView.separated(
+                                  shrinkWrap: true,
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  separatorBuilder: (context, index) =>
+                                      const Padding(
+                                    padding: EdgeInsets.symmetric(
+                                        horizontal:
+                                            15.0), // Horizontal padding for the divider
+                                    child: Divider(),
+                                  ),
+                                  itemCount: _fetchedEmails.length,
+                                  itemBuilder: (context, index) {
+                                    return Container(
+                                      height: 40.0,
+                                      alignment: Alignment.center,
+                                      child: ListTile(
+                                        title: Text(_fetchedEmails[index]),
+                                        onTap: () {
+                                          setState(() {
+                                            receiverEmail = _fetchedEmails[
+                                                index]; // Set the selected email
+                                            _emailController.text =
+                                                _fetchedEmails[index];
+                                            _fetchedEmails =
+                                                []; // Clear the list after selection
+                                          });
+                                        },
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
-                            ],
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 20),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Padding(
-                            padding: EdgeInsets.all(8.0),
-                            child: Text(
-                              "Select a File to share",
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
                             ),
+                          const SizedBox(height: 20),
+                          DefaultTextField(
+                            label: 'Password',
+                            hintText: "Enter password for file",
+                            obsecure: true,
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  value.length < 6) {
+                                return 'Please enter password of length 6(atleast)';
+                              }
+                              return null;
+                            },
+                            onSaved: (newValue) {
+                              setState(() {
+                                password = newValue;
+                              });
+                            },
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceAround,
-                            crossAxisAlignment: CrossAxisAlignment.center,
+                          const SizedBox(height: 20),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              selectedFile != null
-                                  ? Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceBetween,
-                                      children: [
-                                        Text(
-                                          selectedFile!.path
-                                              .split('/')
-                                              .last, // Display the file name
-                                          overflow: TextOverflow
-                                              .ellipsis, // Handle overflow
-                                          style: const TextStyle(fontSize: 14),
-                                        ),
-                                        IconButton(
-                                          icon: const Icon(Icons.close,
-                                              color: Colors.red),
-                                          onPressed:
-                                              _clearSelectedFile, // Remove file on click
-                                        ),
-                                      ],
-                                    )
-                                  : const Text("No file selected"),
-                              selectedFile == null
-                                  ? ElevatedButton(
-                                      onPressed: pickFile,
-                                      child: const Text('Pick File'),
-                                    )
-                                  : Container(),
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text(
+                                  "Select an expiration date",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                children: [
+                                  Text(
+                                    expirationDate == null
+                                        ? "Select a date"
+                                        : "Date: ${getFormattedDateForDisplay(expirationDate)}",
+                                  ),
+                                  const SizedBox(height: 20),
+                                  ElevatedButton(
+                                    onPressed: () => _pickDate(context),
+                                    child: Text(
+                                      expirationDate == null
+                                          ? "Select Expiration Date"
+                                          : "Edit",
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ],
+                          ),
+                          const SizedBox(height: 20),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.all(8.0),
+                                child: Text(
+                                  "Select a File to share",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceAround,
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  selectedFile != null
+                                      ? Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.spaceBetween,
+                                          children: [
+                                            Text(
+                                              selectedFile!.path
+                                                  .split('/')
+                                                  .last, // Display the file name
+                                              overflow: TextOverflow
+                                                  .ellipsis, // Handle overflow
+                                              style:
+                                                  const TextStyle(fontSize: 14),
+                                            ),
+                                            IconButton(
+                                              icon: const Icon(Icons.close,
+                                                  color: Colors.red),
+                                              onPressed:
+                                                  _clearSelectedFile, // Remove file on click
+                                            ),
+                                          ],
+                                        )
+                                      : const Text("No file selected"),
+                                  selectedFile == null
+                                      ? ElevatedButton(
+                                          onPressed: pickFile,
+                                          child: const Text('Pick File'),
+                                        )
+                                      : Container(),
+                                ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 20),
+                          DefaultButton(
+                            hintText: 'Share File',
+                            onPressed: () {
+                              if ((_formKey.currentState?.validate() ??
+                                  false)) {
+                                if (expirationDate != null &&
+                                    expirationDate!.isBefore(DateTime.now())) {
+                                  // Clear the expiration date
+                                  setState(() {
+                                    expirationDate = null;
+                                  });
+
+                                  // Show a SnackBar with an error message
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                          'Expiration date must be at least one day after today!'),
+                                    ),
+                                  );
+
+                                  // Return early to stop further execution
+                                  return;
+                                }
+                                _formKey.currentState?.save();
+                                uploadFile(
+                                    receiverEmail!,
+                                    password!,
+                                    getFormattedDate(expirationDate),
+                                    selectedFile!);
+                              }
+                            },
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
-                      DefaultButton(
-                        hintText: 'Share File',
-                        onPressed: () {
-                          if (_formKey.currentState?.validate() ?? false) {
-                            _formKey.currentState?.save();
-                            uploadFile(
-                                receiverEmail!,
-                                password!,
-                                getFormattedDate(expirationDate),
-                                selectedFile!);
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                )
-              ],
+                    )
+                  ],
+                ),
+              ),
             ),
-          ),
+            if (isLoading)
+              const Opacity(
+                opacity: 0.8,
+                child: Center(
+                  child: CircularProgressIndicator(),
+                ),
+              ),
+          ],
         ),
       ),
     );

@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -9,8 +11,7 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
-  final _storage =
-      const FlutterSecureStorage(
+  final _storage = const FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
     ),
@@ -19,25 +20,35 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     _checkTokens(); // Check for tokens when the app starts
-    // Future.delayed(const Duration(seconds: 3), () {
-    //   Navigator.of(context).pushReplacementNamed('/intro');
-    // });
   }
 
   Future<void> _checkTokens() async {
     // Retrieve tokens from secure storage
     String? accessToken = await _storage.read(key: 'access_token');
     String? refreshToken = await _storage.read(key: 'refresh_token');
+    String? value = await _storage.read(key: 'new_user');
+    bool isNewUser = true;
+    if (mounted) {
+      if (value != null) {
+        isNewUser = jsonDecode(value)['new_user'];
+      }
+    }
+    debugPrint("Value: $isNewUser");
 
     // Delay for splash effect (optional)
     await Future.delayed(const Duration(seconds: 3));
 
     if (accessToken != null || refreshToken != null) {
       // Redirect to home if either token is present
-      Navigator.of(context).pushReplacementNamed('/home');
+      Navigator.of(context).pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
     } else {
-      // Redirect to login/signup (auth) if no tokens are found
-      Navigator.of(context).pushReplacementNamed('/intro');
+      if (!isNewUser) {
+        // Redirect to login/signup (auth) if no tokens are found
+        Navigator.of(context).pushNamedAndRemoveUntil("/auth", (Route<dynamic> route) => false);
+      } else {
+        // Redirect to splash screen if it is new user
+        Navigator.of(context).pushNamedAndRemoveUntil('/intro', (Route<dynamic> route) => false);
+      }
     }
   }
 

@@ -23,15 +23,21 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
     setState(() {
       isLoading = true;
     });
-    final res = await _authService.register(name, email, password, cPassword);
-    if(res==null){
-      
-    }
+    final String? res =
+        await _authService.register(name, email, password, cPassword);
+    if (res == null) {}
     _formKey.currentState?.reset();
     setState(() {
       isLoading = false;
     });
-    Navigator.of(context).pushReplacementNamed('/login');
+    if (res != null) {
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/login', (Route<dynamic> route) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to register new user")),
+      );
+    }
   }
 
   @override
@@ -75,6 +81,12 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           DefaultTextField(
                             label: 'Name',
                             hintText: "Enter your name",
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your name';
+                              }
+                              return null;
+                            },
                             onSaved: (newValue) {
                               setState(() {
                                 name = newValue;
@@ -85,6 +97,16 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                           DefaultTextField(
                             label: 'Email',
                             hintText: "Enter your email",
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your email';
+                              } else if (!RegExp(
+                                      r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$')
+                                  .hasMatch(value)) {
+                                return 'Please enter a valid email address';
+                              }
+                              return null;
+                            },
                             onSaved: (newValue) {
                               setState(() {
                                 email = newValue;
@@ -96,6 +118,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             label: 'Password',
                             hintText: "Enter your password",
                             obsecure: true,
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  value.length < 6) {
+                                return 'Please enter password of length 6(atleast)';
+                              }
+                              return null;
+                            },
                             onSaved: (newValue) {
                               setState(() {
                                 password = newValue;
@@ -107,6 +137,14 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
                             label: 'Confirm Password',
                             hintText: "Confirm your password",
                             obsecure: true,
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  value.length < 6) {
+                                return 'Please re-enter password and make sure it is same as password';
+                              }
+                              return null;
+                            },
                             onSaved: (newValue) {
                               setState(() {
                                 cPassword = newValue;

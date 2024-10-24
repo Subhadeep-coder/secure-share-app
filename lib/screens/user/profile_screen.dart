@@ -55,7 +55,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   Future<void> logout() async {
     final AuthService authService = AuthService();
     await authService.logout();
-    Navigator.of(context).pushReplacementNamed('/auth');
+    Navigator.of(context)
+        .pushNamedAndRemoveUntil('/auth', (Route<dynamic> route) => false);
   }
 
   @override

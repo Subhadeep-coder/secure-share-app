@@ -20,12 +20,19 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() {
       isLoading = true;
     });
-    await _authService.login(email, password);
+    final String? res = await _authService.login(email, password);
     _formKey.currentState?.reset();
     setState(() {
       isLoading = false;
     });
-    Navigator.of(context).pushReplacementNamed('/home');
+    if (res != null) {
+      Navigator.of(context)
+          .pushNamedAndRemoveUntil('/home', (Route<dynamic> route) => false);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Invalid credentials")),
+      );
+    }
   }
 
   @override
@@ -70,6 +77,16 @@ class _LoginScreenState extends State<LoginScreen> {
                           DefaultTextField(
                             label: 'Email',
                             hintText: "Enter your email",
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return 'Please enter your email';
+                              } else if (!RegExp(
+                                      r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$')
+                                  .hasMatch(value)) {
+                                return 'Please enter a valid email address';
+                              }
+                              return null;
+                            },
                             onSaved: (newValue) {
                               setState(() {
                                 email = newValue;
@@ -81,6 +98,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             label: 'Password',
                             hintText: "Enter your password",
                             obsecure: true,
+                            validator: (value) {
+                              if (value == null ||
+                                  value.isEmpty ||
+                                  value.length < 6) {
+                                return 'Please enter password of length 6(atleast)';
+                              }
+                              return null;
+                            },
                             onSaved: (newValue) {
                               setState(() {
                                 password = newValue;
