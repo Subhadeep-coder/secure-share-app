@@ -33,7 +33,6 @@ class _SplashScreenState extends State<SplashScreen> {
         isNewUser = jsonDecode(value)['new_user'];
       }
     }
-    debugPrint("Value: $isNewUser");
 
     // Delay for splash effect (optional)
     await Future.delayed(const Duration(seconds: 3));

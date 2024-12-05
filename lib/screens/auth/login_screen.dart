@@ -37,106 +37,113 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () {
+              Navigator.pop(context);
+            },
+          ),
+          title: const Text("Secure Share"),
         ),
-        title: const Text("Secure Share"),
-      ),
-      body: SafeArea(
-        child: Stack(
-          children: [
-            SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                          vertical: MediaQuery.of(context).size.width * 0.05),
-                      child: const Text(
-                        'Welcome back!',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                            vertical: MediaQuery.of(context).size.width * 0.05),
+                        child: const Text(
+                          'Welcome back!',
+                          style: TextStyle(
+                            fontSize: 32,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                    ),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: <Widget>[
-                          SizedBox(
-                              height: MediaQuery.of(context).size.width * 0.1),
-                          DefaultTextField(
-                            label: 'Email',
-                            hintText: "Enter your email",
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return 'Please enter your email';
-                              } else if (!RegExp(
-                                      r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$')
-                                  .hasMatch(value)) {
-                                return 'Please enter a valid email address';
-                              }
-                              return null;
-                            },
-                            onSaved: (newValue) {
-                              setState(() {
-                                email = newValue;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          DefaultTextField(
-                            label: 'Password',
-                            hintText: "Enter your password",
-                            obsecure: true,
-                            validator: (value) {
-                              if (value == null ||
-                                  value.isEmpty ||
-                                  value.length < 6) {
-                                return 'Please enter password of length 6(atleast)';
-                              }
-                              return null;
-                            },
-                            onSaved: (newValue) {
-                              setState(() {
-                                password = newValue;
-                              });
-                            },
-                          ),
-                          const SizedBox(height: 20),
-                          DefaultButton(
-                            hintText: 'Login',
-                            onPressed: () {
-                              if (_formKey.currentState?.validate() ?? false) {
-                                _formKey.currentState?.save();
-                                _login(email!, password!);
-                              }
-                            },
-                          ),
-                        ],
+                      Form(
+                        key: _formKey,
+                        child: Column(
+                          children: <Widget>[
+                            SizedBox(
+                                height:
+                                    MediaQuery.of(context).size.width * 0.1),
+                            DefaultTextField(
+                              label: 'Email',
+                              hintText: "Enter your email",
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return 'Please enter your email';
+                                } else if (!RegExp(
+                                        r'^[\w-]+(\.[\w-]+)*@[\w-]+(\.[\w-]+)+$')
+                                    .hasMatch(value)) {
+                                  return 'Please enter a valid email address';
+                                }
+                                return null;
+                              },
+                              onSaved: (newValue) {
+                                setState(() {
+                                  email = newValue;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            DefaultTextField(
+                              label: 'Password',
+                              hintText: "Enter your password",
+                              obsecure: true,
+                              validator: (value) {
+                                if (value == null ||
+                                    value.isEmpty ||
+                                    value.length < 6) {
+                                  return 'Please enter password of length 6(atleast)';
+                                }
+                                return null;
+                              },
+                              onSaved: (newValue) {
+                                setState(() {
+                                  password = newValue;
+                                });
+                              },
+                            ),
+                            const SizedBox(height: 20),
+                            DefaultButton(
+                              hintText: 'Login',
+                              onPressed: () {
+                                if (_formKey.currentState?.validate() ??
+                                    false) {
+                                  _formKey.currentState?.save();
+                                  _login(email!, password!);
+                                }
+                              },
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (isLoading)
-              const Opacity(
-                opacity: 0.8,
-                child: Center(
-                  child: CircularProgressIndicator(),
+              if (isLoading)
+                const Opacity(
+                  opacity: 0.8,
+                  child: Center(
+                    child: CircularProgressIndicator(),
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

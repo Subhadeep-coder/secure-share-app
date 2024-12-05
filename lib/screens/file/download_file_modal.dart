@@ -37,7 +37,7 @@ class _DownloadFileModalState extends ConsumerState<DownloadFileModal> {
         if (response != null && response.isNotEmpty) {
           // Write the binary data to the file
           await file.writeAsBytes(response);
-          debugPrint("Here");
+          
           // Notify the user that the download is complete
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text("File downloaded")),

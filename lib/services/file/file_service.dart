@@ -69,7 +69,6 @@ class FileService {
   Future<List<int>?> getFileContent(String shareId, String password) async {
     final api = ref.read(apiProvider);
     try {
-      debugPrint("ID: $shareId Pass: $password");
       final response = await api.api.post(
         "/file/retrieve-file",
         data: {
@@ -95,7 +94,7 @@ class FileService {
   Future<void> deleteFile(String shareId) async {
     final api = ref.read(apiProvider);
     try {
-      final response = await api.api.delete(
+      await api.api.delete(
         "/file/delete-file?share_id=$shareId",
       );
     } catch (e) {

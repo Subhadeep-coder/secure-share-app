@@ -45,7 +45,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         });
       }
     } catch (e) {
-      debugPrint('Error fetching profile data: $e');
       setState(() {
         isLoading = false;
       });
